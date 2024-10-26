@@ -22,16 +22,6 @@ class CampusListView(APIView):
             'name': campus.name,
             'icon': campus.icon,
             'description': campus.description,
-            'grades': [{
-                'id': str(grade.id),
-                'name': grade.name,
-                'subjects': [{
-                    'id': str(subject.id),
-                    'name': subject.name,
-                    'icon': subject.icon,
-                    'colorcode': subject.colorcode
-                } for subject in grade.subjects.all()]
-            } for grade in campus.grades.all()]
         } for campus in campuses]
         return Response(data)
 
@@ -86,20 +76,16 @@ class GradeDetailView(APIView):
             data = {
                 'id': str(grade.id),
                 'name': grade.name,
-                'subjects': [{
-                    'id': str(subject.id),
-                    'name': subject.name,
-                    'proficiencies': [{
-                        'id': str(proficiency.id),
-                        'name': proficiency.name,
-                        'lessons': [{
-                            'id': str(lesson.id),
-                            'name': lesson.name,
-                            'lesson_code': lesson.lesson_code,
-                            'is_done': lesson.is_done
-                        } for lesson in proficiency.lessons.all()]
-                    } for proficiency in subject.proficiencies.all()]
-                } for subject in grade.subjects.all()]
+                'proficiencies': [{
+                    'id': str(proficiency.id),
+                    'name': proficiency.name,
+                    'lessons': [{
+                        'id': str(lesson.id),
+                        'name': lesson.name,
+                        'lesson_code': lesson.lesson_code,
+                        'is_done': lesson.is_done
+                    } for lesson in proficiency.lessons.all()]
+                } for proficiency in grade.proficiencies.all()]
             }
             return Response(data)
         except Grade.DoesNotExist:
