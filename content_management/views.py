@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -39,25 +39,22 @@ class CampusDetailView(APIView):
                 'grades': [{
                     'id': str(grade.id),
                     'name': grade.name,
-                    'subjects': [{
-                        'id': str(subject.id),
-                        'name': subject.name,
-                        'icon': subject.icon,
-                        'colorcode': subject.colorcode
-                    } for subject in grade.subjects.all()]
                 } for grade in campus.grades.all()]
             }
             return Response(data)
         except Campus.DoesNotExist:
             return Response({'error': 'Campus not found'}, status=status.HTTP_404_NOT_FOUND)
 
-class SubjectDetailView(APIView):
+class GradeDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, subject_id):
-        try:
-            subject = Subject.objects.get(id=subject_id)
-            data = {
+    def get(self, request, grade_id):
+        grade = get_object_or_404(Grade, id=grade_id)
+        subjects = grade.subjects.all()
+        data = {
+            'id': str(grade.id),
+            'name': grade.name,
+            'subjects': [{
                 'id': str(subject.id),
                 'name': subject.name,
                 'icon': subject.icon,
@@ -67,112 +64,99 @@ class SubjectDetailView(APIView):
                     'name': proficiency.name,
                     'lessons': [{
                         'id': str(lesson.id),
-                        'name': lesson.name,
                         'lesson_code': lesson.lesson_code,
+                        'name': lesson.name,
                         'is_done': lesson.is_done
                     } for lesson in proficiency.lessons.all()]
                 } for proficiency in subject.proficiencies.all()]
-            }
-            return Response(data)
-        except Subject.DoesNotExist:
-            return Response({'error': 'Subject not found'}, status=status.HTTP_404_NOT_FOUND)
+            } for subject in subjects]
+        }
+        return Response(data)
 
-class GradeDetailView(APIView):
+class SubjectDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, grade_id):
-        try:
-            grade = Grade.objects.get(id=grade_id)
-            data = {
-                'id': str(grade.id),
-                'name': grade.name,
-                'proficiencies': [{
-                    'id': str(proficiency.id),
-                    'name': proficiency.name,
-                    'lessons': [{
-                        'id': str(lesson.id),
-                        'name': lesson.name,
-                        'lesson_code': lesson.lesson_code,
-                        'is_done': lesson.is_done
-                    } for lesson in proficiency.lessons.all()]
-                } for proficiency in grade.proficiencies.all()]
-            }
-            return Response(data)
-        except Grade.DoesNotExist:
-            return Response({'error': 'Grade not found'}, status=status.HTTP_404_NOT_FOUND)
-
-class ProficiencyLessonsView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, proficiency_id):
-        try:
-            proficiency = Proficiency.objects.get(id=proficiency_id)
-            lessons = proficiency.lessons.all()
-            data = {
-                'proficiency_id': str(proficiency.id),
-                'proficiency_name': proficiency.name,
+    def get(self, request, subject_id):
+        subject = get_object_or_404(Subject, id=subject_id)
+        proficiencies = subject.proficiencies.all()
+        data = {
+            'id': str(subject.id),
+            'name': subject.name,
+            'icon': subject.icon,
+            'colorcode': subject.colorcode,
+            'proficiencies': [{
+                'id': str(proficiency.id),
+                'name': proficiency.name,
                 'lessons': [{
                     'id': str(lesson.id),
                     'lesson_code': lesson.lesson_code,
                     'name': lesson.name,
                     'is_done': lesson.is_done
-                } for lesson in lessons]
-            }
-            return Response(data)
-        except Proficiency.DoesNotExist:
-            return Response({'error': 'Proficiency not found'}, status=status.HTTP_404_NOT_FOUND)
+                } for lesson in proficiency.lessons.all()]
+            } for proficiency in proficiencies]
+        }
+        return Response(data)
+
+class ProficiencyLessonsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, proficiency_id):
+        proficiency = get_object_or_404(Proficiency, id=proficiency_id)
+        lessons = proficiency.lessons.all()
+        data = {
+            'proficiency_id': str(proficiency.id),
+            'proficiency_name': proficiency.name,
+            'lessons': [{
+                'id': str(lesson.id),
+                'lesson_code': lesson.lesson_code,
+                'name': lesson.name,
+                'is_done': lesson.is_done
+            } for lesson in lessons]
+        }
+        return Response(data)
 
 class LessonDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, lesson_code):
-        try:
-            lesson = Lesson.objects.get(lesson_code=lesson_code)
-            data = {
-                'id': str(lesson.id),
-                'lesson_code': lesson.lesson_code,
-                'name': lesson.name,
-                'subject': lesson.subject.name,
-                'grade': lesson.subject.grade.name,
-                'proficiency': lesson.proficiency.name,
-                'is_done': lesson.is_done,
-                'objective': lesson.objective,
-                'duration': lesson.duration,
-                'specific_learning_outcome': lesson.specific_learning_outcome,
-                'behavioural_outcome': lesson.behavioural_outcome,
-                'materials_required': lesson.materials_required,
-                'activate': lesson.activate,
-                'acquire': lesson.acquire,
-                'apply': lesson.apply,
-                'assess': lesson.assess,
-            }
-            return Response(data)
-        except Lesson.DoesNotExist:
-            return Response({'error': 'Lesson not found'}, status=status.HTTP_404_NOT_FOUND)
+        lesson = get_object_or_404(Lesson, lesson_code=lesson_code)
+        data = {
+            'id': str(lesson.id),
+            'lesson_code': lesson.lesson_code,
+            'name': lesson.name,
+            'subject': lesson.subject.name,
+            'grade': lesson.grade.name,
+            'proficiency': lesson.proficiency.name,
+            'is_done': lesson.is_done,
+            'objective': lesson.objective,
+            'duration': lesson.duration,
+            'specific_learning_outcome': lesson.specific_learning_outcome,
+            'behavioural_outcome': lesson.behavioural_outcome,
+            'materials_required': lesson.materials_required,
+            'activate': lesson.activate,
+            'acquire': lesson.acquire,
+            'apply': lesson.apply,
+            'assess': lesson.assess,
+        }
+        return Response(data)
 
 class MarkLessonDoneView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, lesson_code):
-        try:
-            lesson = Lesson.objects.get(lesson_code=lesson_code)
-            lesson.is_done = True
-            lesson.save()
-            return Response({'message': 'Lesson marked as done'}, status=status.HTTP_200_OK)
-        except Lesson.DoesNotExist:
-            return Response({'error': 'Lesson not found'}, status=status.HTTP_404_NOT_FOUND)
+        lesson = get_object_or_404(Lesson, lesson_code=lesson_code)
+        lesson.is_done = True
+        lesson.save()
+        return Response({'message': 'Lesson marked as done'}, status=status.HTTP_200_OK)
 
 class MarkLessonNotDoneView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, lesson_code):
-        try:
-            lesson = Lesson.objects.get(lesson_code=lesson_code)
-            lesson.is_done = False
-            lesson.save()
-            return Response({'message': 'Lesson marked as not done'}, status=status.HTTP_200_OK)
-        except Lesson.DoesNotExist:
-            return Response({'error': 'Lesson not found'}, status=status.HTTP_404_NOT_FOUND)
+        lesson = get_object_or_404(Lesson, lesson_code=lesson_code)
+        lesson.is_done = False
+        lesson.save()
+        return Response({'message': 'Lesson marked as not done'}, status=status.HTTP_200_OK)
 
 class ParseCSVView(APIView):
     def get(self, request):
