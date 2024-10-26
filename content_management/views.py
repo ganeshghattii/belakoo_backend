@@ -39,8 +39,12 @@ class CampusDetailView(APIView):
                 'grades': [{
                     'id': str(grade.id),
                     'name': grade.name,
-                    'icon': grade.icon,
-                    'colorcode':grade.colorcode
+                    'subjects': [{
+                        'id': str(subject.id),
+                        'name': subject.name,
+                        'icon': subject.icon,
+                        'colorcode': subject.colorcode
+                    } for subject in grade.subjects.all()]
                 } for grade in campus.grades.all()]
             }
             return Response(data)
@@ -57,11 +61,17 @@ class SubjectDetailView(APIView):
                 'id': str(subject.id),
                 'name': subject.name,
                 'icon': subject.icon,
-                'colorcode':subject.colorcode,
-                'grades': [{
-                    'id': str(grade.id),
-                    'name': grade.name,
-                } for grade in subject.grades.all()]
+                'colorcode': subject.colorcode,
+                'proficiencies': [{
+                    'id': str(proficiency.id),
+                    'name': proficiency.name,
+                    'lessons': [{
+                        'id': str(lesson.id),
+                        'name': lesson.name,
+                        'lesson_code': lesson.lesson_code,
+                        'is_done': lesson.is_done
+                    } for lesson in proficiency.lessons.all()]
+                } for proficiency in subject.proficiencies.all()]
             }
             return Response(data)
         except Subject.DoesNotExist:
@@ -123,7 +133,7 @@ class LessonDetailView(APIView):
                 'lesson_code': lesson.lesson_code,
                 'name': lesson.name,
                 'subject': lesson.subject.name,
-                'grade': lesson.grade.name,
+                'grade': lesson.subject.grade.name,
                 'proficiency': lesson.proficiency.name,
                 'is_done': lesson.is_done,
                 'objective': lesson.objective,
