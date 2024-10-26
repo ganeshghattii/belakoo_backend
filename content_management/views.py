@@ -36,12 +36,12 @@ class CampusDetailView(APIView):
                 'name': campus.name,
                 'icon': campus.icon,
                 'description': campus.description,
-                'subjects': [{
-                    'id': str(subject.id),
-                    'name': subject.name,
-                    'icon': subject.icon,
-                    'colorcode':subject.colorcode
-                } for subject in campus.subjects.all()]
+                'grades': [{
+                    'id': str(grade.id),
+                    'name': grade.name,
+                    'icon': grade.icon,
+                    'colorcode':grade.colorcode
+                } for grade in campus.grades.all()]
             }
             return Response(data)
         except Campus.DoesNotExist:
