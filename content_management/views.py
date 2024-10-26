@@ -180,9 +180,10 @@ class ParseCSVView(APIView):
             # Get all CSV files in the directory
             csv_files = glob.glob(os.path.join(content_dir, '*.csv'))
 
-            # Assuming campus with code 'c1' exists
+            print("fetch campus")
             campus = Campus.objects.get(campus_code='c1')
 
+            print(campus, "fetched")
             for file_path in csv_files:
                 print(f"Processing file: {file_path}")
                 df = pd.read_csv(file_path)
@@ -223,25 +224,27 @@ class ParseCSVView(APIView):
                 lesson_number = extracted_code[2]  # Third part is lesson
                 proficiency_code = extracted_code[3]  # Fourth part is proficiency
 
+                # Get or create the Grade
+                grade, created = Grade.objects.get_or_create(
+                    grade_code=grade_code,
+                    campus=campus,  # Link grade to the specific campus
+                    defaults={'name': grade_code}
+                )
+                print(f"{'Created' if created else 'Found'} grade: {grade.name}")
+
                 # Get or create the Subject
                 subject_name = find_keyword_value('SUBJECT')  # Assuming 'SUBJECT' is a keyword in the CSV
                 subject, created = Subject.objects.get_or_create(
                     subject_code=subject_code,
-                    defaults={'name': subject_name, 'campus': campus}
+                    grade=grade,  # Link subject to the specific grade
+                    defaults={'name': subject_name}
                 )
                 print(f"{'Created' if created else 'Found'} subject: {subject.name}")
 
-                # Get or create the Grade
-                grade, created = Grade.objects.get_or_create(
-                    grade_code=grade_code,
-                    defaults={'name': grade_code, 'subject': subject}
-                )
-                print(f"{'Created' if created else 'Found'} grade: {grade.name}")
-
-                # Create a new Proficiency for this specific Grade
+                # Create a new Proficiency for this specific Subject
                 proficiency, created = Proficiency.objects.get_or_create(
                     proficiency_code=proficiency_code,
-                    grade=grade,  # Link proficiency to the specific grade
+                    subject=subject,  # Link proficiency to the specific subject
                     defaults={'name': proficiency_code}
                 )
                 print(f"{'Created' if created else 'Found'} proficiency: {proficiency.name}")
@@ -252,7 +255,7 @@ class ParseCSVView(APIView):
                         lesson_code=lesson_data['LESSON CODE'],
                         name=f"Lesson {lesson_number}",
                         subject=subject,
-                        grade=grade,
+                        grade=grade,  # Link lesson to the specific grade
                         proficiency=proficiency,
                         objective=lesson_data.get('OBJECTIVE', ''),
                         duration=lesson_data.get('Duration', ''),
@@ -266,7 +269,6 @@ class ParseCSVView(APIView):
                     )
                     created_lessons.append(lesson.lesson_code)
                     print(f"Lesson created: {lesson.name}")
-
                 except Exception as e:
                     error_details.append({
                         'lesson_code': lesson_data.get('LESSON CODE'),

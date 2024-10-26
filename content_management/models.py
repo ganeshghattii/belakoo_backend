@@ -52,6 +52,7 @@ class Lesson(models.Model):
     lesson_code = models.CharField(max_length=100, unique=True)
     name = models.CharField(max_length=255)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='lessons')
+    grade = models.ForeignKey(Grade, on_delete=models.CASCADE, related_name='lessons')  # New field added
     proficiency = models.ForeignKey(Proficiency, on_delete=models.CASCADE, related_name='lessons')
     is_done = models.BooleanField(default=False)
     objective = models.TextField(null=True, blank=True)
