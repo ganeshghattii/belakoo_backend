@@ -13,4 +13,6 @@ urlpatterns = [
     path('subject/<uuid:subject_id>/', views.SubjectManagementView.as_view(), name='update-delete-subject'),
     path('proficiency/', views.ProficiencyManagementView.as_view(), name='create-proficiency'),
     path('proficiency/<uuid:proficiency_id>/', views.ProficiencyManagementView.as_view(), name='update-delete-proficiency'),
+    path('lesson/', views.LessonManagementView.as_view(), name='create-lesson'),
+    path('lesson/<uuid:lesson_id>/', views.LessonManagementView.as_view(), name='update-delete-lesson'),
 ]

@@ -6,7 +6,8 @@ from rest_framework.permissions import IsAuthenticated, BasePermission
 from user_management.models import User
 from rest_framework.decorators import permission_classes
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from content_management.models import Campus, Grade, Subject, Proficiency
+from content_management.models import Campus, Grade, Subject, Proficiency, Lesson
+import json
 
 class AdminPermission(BasePermission):
     def has_permission(self, request, view):
@@ -582,4 +583,202 @@ class ProficiencyManagementView(APIView):
         except Exception as e:
             return Response({
                 'msg': f'Error deleting proficiency: {str(e)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+class LessonManagementView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, AdminPermission]
+
+    def post(self, request):
+        """Create a new lesson"""
+        lesson_code = request.data.get('lesson_code')
+        name = request.data.get('name')
+        subject_id = request.data.get('subject_id')
+        grade_id = request.data.get('grade_id')
+        proficiency_id = request.data.get('proficiency_id')
+
+        # Validate required fields
+        if not all([lesson_code, name, subject_id, grade_id, proficiency_id]):
+            return Response({
+                'msg': 'lesson_code, name, subject_id, grade_id, and proficiency_id are required fields.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Verify all foreign keys exist
+            subject = Subject.objects.get(id=subject_id)
+            grade = Grade.objects.get(id=grade_id)
+            proficiency = Proficiency.objects.get(id=proficiency_id)
+            
+            # Check if lesson_code is unique
+            if Lesson.objects.filter(lesson_code=lesson_code).exists():
+                return Response({
+                    'msg': 'lesson_code must be unique.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Create lesson with only required fields
+            lesson = Lesson.objects.create(
+                lesson_code=lesson_code,
+                name=name,
+                subject=subject,
+                grade=grade,
+                proficiency=proficiency
+            )
+            
+            return Response({
+                'msg': 'Lesson created successfully',
+                'data': {
+                    'id': str(lesson.id),
+                    'lesson_code': lesson.lesson_code,
+                    'name': lesson.name,
+                    'subject_id': str(lesson.subject.id),
+                    'grade_id': str(lesson.grade.id),
+                    'proficiency_id': str(lesson.proficiency.id),
+                    'duration': lesson.duration,
+                    'objective': lesson.objective,
+                    'specific_learning_outcome': lesson.specific_learning_outcome,
+                    'behavioral_outcome': lesson.behavioral_outcome,
+                    'materials_required': lesson.materials_required,
+                    'is_done': lesson.is_done,
+                    'verified': lesson.verified,
+                    'activate': json.loads(lesson.activate) if lesson.activate else [],
+                    'acquire': json.loads(lesson.acquire) if lesson.acquire else [],
+                    'assess': json.loads(lesson.assess) if lesson.assess else [],
+                    'apply': json.loads(lesson.apply) if lesson.apply else []
+                }
+            }, status=status.HTTP_201_CREATED)
+
+        except (Subject.DoesNotExist, Grade.DoesNotExist, Proficiency.DoesNotExist) as e:
+            return Response({
+                'msg': f'{str(e.__class__.__name__)} not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'msg': f'Error creating lesson: {str(e)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, lesson_id):
+        """Update an existing lesson"""
+        try:
+            lesson = Lesson.objects.get(id=lesson_id)
+            
+            # Update basic fields if provided
+            if 'lesson_code' in request.data:
+                if Lesson.objects.filter(lesson_code=request.data['lesson_code']).exclude(id=lesson_id).exists():
+                    return Response({
+                        'msg': 'lesson_code must be unique.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                lesson.lesson_code = request.data['lesson_code']
+            
+            if 'name' in request.data:
+                lesson.name = request.data['name']
+                
+            if 'duration' in request.data:
+                lesson.duration = request.data['duration']
+                
+            if 'objective' in request.data:
+                lesson.objective = request.data['objective']
+                
+            if 'specific_learning_outcome' in request.data:
+                lesson.specific_learning_outcome = request.data['specific_learning_outcome']
+                
+            if 'behavioral_outcome' in request.data:
+                lesson.behavioral_outcome = request.data['behavioral_outcome']
+                
+            if 'materials_required' in request.data:
+                lesson.materials_required = request.data['materials_required']
+                
+            # Handle verified status (admin only)
+            if 'verified' in request.data:
+                lesson.verified = request.data['verified']
+                # If admin sets verified to True, automatically set is_done to True
+                if request.data['verified']:
+                    lesson.is_done = True
+                
+            # Update foreign keys if provided
+            if 'subject_id' in request.data:
+                try:
+                    new_subject = Subject.objects.get(id=request.data['subject_id'])
+                    lesson.subject = new_subject
+                except Subject.DoesNotExist:
+                    return Response({
+                        'msg': 'New subject not found'
+                    }, status=status.HTTP_404_NOT_FOUND)
+
+            if 'grade_id' in request.data:
+                try:
+                    new_grade = Grade.objects.get(id=request.data['grade_id'])
+                    lesson.grade = new_grade
+                except Grade.DoesNotExist:
+                    return Response({
+                        'msg': 'New grade not found'
+                    }, status=status.HTTP_404_NOT_FOUND)
+
+            if 'proficiency_id' in request.data:
+                try:
+                    new_proficiency = Proficiency.objects.get(id=request.data['proficiency_id'])
+                    lesson.proficiency = new_proficiency
+                except Proficiency.DoesNotExist:
+                    return Response({
+                        'msg': 'New proficiency not found'
+                    }, status=status.HTTP_404_NOT_FOUND)
+
+            # Update JSON fields if provided
+            if 'activate' in request.data:
+                lesson.activate = json.dumps(request.data['activate'])
+            if 'acquire' in request.data:
+                lesson.acquire = json.dumps(request.data['acquire'])
+            if 'assess' in request.data:
+                lesson.assess = json.dumps(request.data['assess'])
+            if 'apply' in request.data:
+                lesson.apply = json.dumps(request.data['apply'])
+
+            lesson.save()
+
+            return Response({
+                'msg': 'Lesson updated successfully',
+                'data': {
+                    'id': str(lesson.id),
+                    'lesson_code': lesson.lesson_code,
+                    'name': lesson.name,
+                    'subject_id': str(lesson.subject.id),
+                    'grade_id': str(lesson.grade.id),
+                    'proficiency_id': str(lesson.proficiency.id),
+                    'duration': lesson.duration,
+                    'objective': lesson.objective,
+                    'specific_learning_outcome': lesson.specific_learning_outcome,
+                    'behavioral_outcome': lesson.behavioral_outcome,
+                    'materials_required': lesson.materials_required,
+                    'is_done': lesson.is_done,
+                    'verified': lesson.verified,
+                    'activate': json.loads(lesson.activate) if lesson.activate else [],
+                    'acquire': json.loads(lesson.acquire) if lesson.acquire else [],
+                    'assess': json.loads(lesson.assess) if lesson.assess else [],
+                    'apply': json.loads(lesson.apply) if lesson.apply else []
+                }
+            })
+
+        except Lesson.DoesNotExist:
+            return Response({
+                'msg': 'Lesson not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'msg': f'Error updating lesson: {str(e)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, lesson_id):
+        """Delete a lesson"""
+        try:
+            lesson = Lesson.objects.get(id=lesson_id)
+            lesson.delete()
+            return Response({
+                'msg': 'Lesson deleted successfully'
+            }, status=status.HTTP_200_OK)
+        except Lesson.DoesNotExist:
+            return Response({
+                'msg': 'Lesson not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'msg': f'Error deleting lesson: {str(e)}'
             }, status=status.HTTP_400_BAD_REQUEST)
