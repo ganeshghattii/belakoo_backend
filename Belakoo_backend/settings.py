@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     'user_management',
     'content_management',
+    'admin_management',
     'corsheaders',  # Add this line
 ]
 

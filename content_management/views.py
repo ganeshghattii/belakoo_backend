@@ -19,8 +19,8 @@ class CampusListView(APIView):
         campuses = Campus.objects.all()
         data = [{
             'id': str(campus.id),
+            'campus_code': campus.campus_code,
             'name': campus.name,
-            'icon': campus.icon,
             'description': campus.description,
         } for campus in campuses]
         return Response(data)
@@ -33,8 +33,8 @@ class CampusDetailView(APIView):
             campus = Campus.objects.get(id=campus_id)
             data = {
                 'id': str(campus.id),
+                'campus_code': campus.campus_code,
                 'name': campus.name,
-                'icon': campus.icon,
                 'description': campus.description,
                 'grades': [{
                     'id': str(grade.id),

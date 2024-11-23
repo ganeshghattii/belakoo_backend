@@ -20,17 +20,22 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
+    class Role(models.TextChoices):
+        ADMIN = 'ADMIN', 'Admin'
+        VOLUNTEER = 'VOLUNTEER', 'Volunteer'
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=255)
+    role = models.CharField(max_length=20, choices=Role.choices, default=Role.VOLUNTEER)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    is_superuser = models.BooleanField(default=False)  # Ensure the superuser flag exists
+    is_superuser = models.BooleanField(default=False)
 
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['name']  # This can be optional, but retained for clarity
+    REQUIRED_FIELDS = ['name']
 
     def __str__(self):
         return self.email

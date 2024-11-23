@@ -6,7 +6,6 @@ class Campus(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     campus_code = models.CharField(max_length=10, unique=True)
     name = models.CharField(max_length=255)
-    icon = models.URLField()
     description = models.TextField()
 
     class Meta:
