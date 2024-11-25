@@ -118,8 +118,8 @@ class ProficiencyLessonsView(APIView):
 class LessonDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, lesson_code):
-        lesson = get_object_or_404(Lesson, lesson_code=lesson_code)
+    def get(self, request, lesson_id):
+        lesson = get_object_or_404(Lesson, id=lesson_id)
         data = {
             'id': str(lesson.id),
             'lesson_code': lesson.lesson_code,
@@ -143,8 +143,8 @@ class LessonDetailView(APIView):
 class MarkLessonDoneView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, lesson_code):
-        lesson = get_object_or_404(Lesson, lesson_code=lesson_code)
+    def post(self, request, lesson_id):
+        lesson = get_object_or_404(Lesson, id=lesson_id)
         lesson.is_done = True
         lesson.save()
         return Response({'message': 'Lesson marked as done'}, status=status.HTTP_200_OK)
@@ -152,8 +152,8 @@ class MarkLessonDoneView(APIView):
 class MarkLessonNotDoneView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, lesson_code):
-        lesson = get_object_or_404(Lesson, lesson_code=lesson_code)
+    def post(self, request, lesson_id):
+        lesson = get_object_or_404(Lesson, id=lesson_id)
         lesson.is_done = False
         lesson.save()
         return Response({'message': 'Lesson marked as not done'}, status=status.HTTP_200_OK)
