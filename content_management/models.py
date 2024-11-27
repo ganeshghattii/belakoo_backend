@@ -60,10 +60,10 @@ class Lesson(models.Model):
     specific_learning_outcome = models.TextField(null=True, blank=True)
     behavioral_outcome = models.TextField(null=True, blank=True)
     materials_required = models.TextField(null=True, blank=True)
-    activate = models.JSONField(default=list, null=True, blank=True)
-    acquire = models.JSONField(default=list, null=True, blank=True)
-    apply = models.JSONField(default=list, null=True, blank=True)
-    assess = models.JSONField(default=list, null=True, blank=True)
+    activate = models.JSONField(null=True, blank=True)
+    acquire = models.JSONField(null=True, blank=True)
+    apply = models.JSONField(null=True, blank=True)
+    assess = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return self.lesson_code

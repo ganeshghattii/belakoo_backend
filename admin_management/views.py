@@ -639,10 +639,10 @@ class LessonManagementView(APIView):
                     'materials_required': lesson.materials_required,
                     'is_done': lesson.is_done,
                     'verified': lesson.verified,
-                    'activate': json.loads(lesson.activate) if lesson.activate else [],
-                    'acquire': json.loads(lesson.acquire) if lesson.acquire else [],
-                    'assess': json.loads(lesson.assess) if lesson.assess else [],
-                    'apply': json.loads(lesson.apply) if lesson.apply else []
+                    'activate': json.loads(lesson.activate),
+                    'acquire': json.loads(lesson.acquire),
+                    'assess': json.loads(lesson.assess),
+                    'apply': json.loads(lesson.apply)
                 }
             }, status=status.HTTP_201_CREATED)
 
