@@ -615,7 +615,6 @@ class LessonManagementView(APIView):
                     'msg': 'lesson_code must be unique.'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Create lesson with only required fields
             lesson = Lesson.objects.create(
                 lesson_code=lesson_code,
                 name=name,
