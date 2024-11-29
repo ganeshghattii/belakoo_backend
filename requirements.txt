@@ -10,3 +10,4 @@ whitenoise
 pandas
 openpyxl
 requests
+exponent_server_sdk
