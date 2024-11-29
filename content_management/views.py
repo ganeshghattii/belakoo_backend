@@ -147,6 +147,7 @@ class MarkLessonDoneView(APIView):
 
     def post(self, request, lesson_id):
         lesson = get_object_or_404(Lesson, id=lesson_id)
+        print(lesson)
         lesson.is_done = True
         lesson.completed_by = request.user
         lesson.save()

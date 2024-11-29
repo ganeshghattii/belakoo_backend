@@ -66,7 +66,6 @@ class UpdatePushTokenView(APIView):
         token = request.data.get('expo_push_token')
         if not token:
             return Response({'msg': 'expo_push_token is required'}, status=status.HTTP_400_BAD_REQUEST)
-        
         request.user.expo_push_token = token
         request.user.save()
         return Response({'msg': 'Push token updated successfully'})

@@ -16,9 +16,10 @@ def send_push_notification(expo_push_token, title, message, data=None):
         "body": message,
         "data": data or {},
     }
-
+    print(payload)
     try:
         response = requests.post(url, headers=headers, data=json.dumps(payload))
+        print("response",response)
         if response.status_code == 200:
             print(f"Notification sent successfully to {expo_push_token}")
         else:
@@ -29,15 +30,15 @@ def send_push_notification(expo_push_token, title, message, data=None):
 def notify_admins_lesson_completed(lesson, completed_by):
     # Get all admins with push tokens
     admins = User.objects.filter(
-        role='admin',  # adjust based on your role field
+        role='ADMIN',  # adjust based on your role field
         expo_push_token__isnull=False
     )
-    
+    print(admins)
     for admin in admins:
         send_push_notification(
             expo_push_token=admin.expo_push_token,
             title="Lesson Completion Review Required",
-            message=f"{completed_by.full_name} has completed lesson: {lesson.name}",
+            message=f"{completed_by.name} has completed lesson: {lesson.name}",
             data={
                 "lesson_id": str(lesson.id),
                 "lesson_code": lesson.lesson_code,
