@@ -781,3 +781,37 @@ class LessonManagementView(APIView):
             return Response({
                 'msg': f'Error deleting lesson: {str(e)}'
             }, status=status.HTTP_400_BAD_REQUEST)
+
+class UnverifiedCompletedLessonsView(APIView):
+    permission_classes = [IsAuthenticated, AdminPermission]
+
+    def get(self, request):
+        unverified_lessons = Lesson.objects.filter(
+            is_done=True,
+            verified=False
+        ).select_related('completed_by', 'subject', 'grade', 'proficiency')
+
+        data = [{
+            'id': str(lesson.id),
+            'lesson_code': lesson.lesson_code,
+            'name': lesson.name,
+            'subject': {
+                'id': str(lesson.subject.id),
+                'name': lesson.subject.name
+            },
+            'grade': {
+                'id': str(lesson.grade.id),
+                'name': lesson.grade.name
+            },
+            'proficiency': {
+                'id': str(lesson.proficiency.id),
+                'name': lesson.proficiency.name
+            },
+            'completed_by': {
+                'id': str(lesson.completed_by.id),
+                'email': lesson.completed_by.email,
+                'full_name': lesson.completed_by.full_name
+            } if lesson.completed_by else None
+        } for lesson in unverified_lessons]
+
+        return Response(data)

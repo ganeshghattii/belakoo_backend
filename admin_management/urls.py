@@ -15,4 +15,5 @@ urlpatterns = [
     path('proficiency/<uuid:proficiency_id>/', views.ProficiencyManagementView.as_view(), name='update-delete-proficiency'),
     path('lesson/', views.LessonManagementView.as_view(), name='create-lesson'),
     path('lesson/<uuid:lesson_id>/', views.LessonManagementView.as_view(), name='update-delete-lesson'),
+    path('unverified-completed-lessons/', views.UnverifiedCompletedLessonsView.as_view(), name='unverified-completed-lessons'),
 ]

@@ -1,6 +1,8 @@
 from django.db import models
 import uuid
 import json
+from django.conf import settings
+from user_management.models import User
 
 class Campus(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -55,6 +57,7 @@ class Lesson(models.Model):
     proficiency = models.ForeignKey(Proficiency, on_delete=models.CASCADE, related_name='lessons')
     is_done = models.BooleanField(default=False)
     verified = models.BooleanField(default=False)
+    completed_by = models.ForeignKey('user_management.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='completed_lessons')
     objective = models.TextField(null=True, blank=True)
     duration = models.CharField(max_length=50, null=True, blank=True)
     specific_learning_outcome = models.TextField(null=True, blank=True)

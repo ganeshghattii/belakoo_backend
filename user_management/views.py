@@ -6,6 +6,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from user_management.models import User
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from rest_framework.permissions import IsAuthenticated
 
 class UserLogin(APIView):
     def post(self, request):
@@ -57,3 +58,15 @@ class TokenObtainSerializer(TokenObtainPairSerializer):
 
 class TokenView(TokenObtainPairView):
     serializer_class = TokenObtainSerializer
+
+class UpdatePushTokenView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        token = request.data.get('expo_push_token')
+        if not token:
+            return Response({'msg': 'expo_push_token is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        request.user.expo_push_token = token
+        request.user.save()
+        return Response({'msg': 'Push token updated successfully'})

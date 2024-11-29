@@ -10,6 +10,7 @@ import pandas as pd
 import math
 import os
 import glob
+from utils.notifications import notify_admins_lesson_completed
 
 class CampusListView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -147,7 +148,12 @@ class MarkLessonDoneView(APIView):
     def post(self, request, lesson_id):
         lesson = get_object_or_404(Lesson, id=lesson_id)
         lesson.is_done = True
+        lesson.completed_by = request.user
         lesson.save()
+        
+        # Send notification to admins
+        notify_admins_lesson_completed(lesson, request.user)
+        
         return Response({'message': 'Lesson marked as done'}, status=status.HTTP_200_OK)
 
 class MarkLessonNotDoneView(APIView):
