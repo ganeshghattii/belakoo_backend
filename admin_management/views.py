@@ -810,7 +810,7 @@ class UnverifiedCompletedLessonsView(APIView):
             'completed_by': {
                 'id': str(lesson.completed_by.id),
                 'email': lesson.completed_by.email,
-                'full_name': lesson.completed_by.full_name
+                'name': lesson.completed_by.name
             } if lesson.completed_by else None
         } for lesson in unverified_lessons]
 
