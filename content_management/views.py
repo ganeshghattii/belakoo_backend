@@ -92,7 +92,8 @@ class SubjectDetailView(APIView):
                     'id': str(lesson.id),
                     'lesson_code': lesson.lesson_code,
                     'name': lesson.name,
-                    'is_done': lesson.is_done
+                    'is_done': lesson.is_done,
+                    'verified':lesson.verified,
                 } for lesson in proficiency.lessons.all()]
             } for proficiency in proficiencies]
         }
