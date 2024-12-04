@@ -113,7 +113,8 @@ class ProficiencyLessonsView(APIView):
                 'lesson_code': lesson.lesson_code,
                 'name': lesson.name,
                 'is_done': lesson.is_done,
-                'verified':lesson.verified
+                'verified':lesson.verified,
+                'created_at':lesson.created_at
             } for lesson in lessons]
         }
         return Response(data)
@@ -142,6 +143,7 @@ class LessonDetailView(APIView):
             'acquire': lesson.acquire,
             'apply': lesson.apply,
             'assess': lesson.assess,
+            'created_at': lesson.created_at
         }
         return Response(data)
 
