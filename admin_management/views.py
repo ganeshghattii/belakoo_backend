@@ -632,6 +632,7 @@ class LessonManagementView(APIView):
                     'subject_id': str(lesson.subject.id),
                     'grade_id': str(lesson.grade.id),
                     'proficiency_id': str(lesson.proficiency.id),
+                    'created_at': lesson.created_at,
                     'duration': lesson.duration,
                     'objective': lesson.objective,
                     'specific_learning_outcome': lesson.specific_learning_outcome,
@@ -639,7 +640,7 @@ class LessonManagementView(APIView):
                     'materials_required': lesson.materials_required,
                     'is_done': lesson.is_done,
                     'verified': lesson.verified,
-                    'activate': lesson.activate ,
+                    'activate': lesson.activate,
                     'acquire': lesson.acquire,
                     'assess': lesson.assess,
                     'apply': lesson.apply

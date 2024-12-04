@@ -131,7 +131,7 @@ class LessonDetailView(APIView):
             'grade': lesson.grade.name,
             'proficiency': lesson.proficiency.name,
             'is_done': lesson.is_done,
-            'verified':lesson.verified,
+            'verified': lesson.verified,
             'objective': lesson.objective,
             'duration': lesson.duration,
             'specific_learning_outcome': lesson.specific_learning_outcome,

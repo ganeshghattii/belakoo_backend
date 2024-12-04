@@ -67,6 +67,7 @@ class Lesson(models.Model):
     acquire = models.JSONField(null=True, blank=True)
     apply = models.JSONField(null=True, blank=True)
     assess = models.JSONField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.lesson_code

@@ -16,14 +16,15 @@ def send_push_notification(expo_push_token, title, message, data=None):
         "body": message,
         "data": data or {},
     }
-    print(payload)
+    print("Sending payload:", json.dumps(payload))
     try:
         response = requests.post(url, headers=headers, data=json.dumps(payload))
-        print("response",response)
+        print("Response status code:", response.status_code)
+        print("Response content:", response.content.decode())
         if response.status_code == 200:
             print(f"Notification sent successfully to {expo_push_token}")
         else:
-            print(f"Failed to send notification: {response.content}")
+            print(f"Failed to send notification: {response.status_code} - {response.content.decode()}")
     except Exception as e:
         print(f"Error sending notification: {str(e)}")
 
