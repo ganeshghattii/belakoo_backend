@@ -40,6 +40,7 @@ class CampusDetailView(APIView):
                 'grades': [{
                     'id': str(grade.id),
                     'name': grade.name,
+                    'grade_code': grade.grade_code,
                 } for grade in campus.grades.all()]
             }
             return Response(data)
@@ -55,14 +56,17 @@ class GradeDetailView(APIView):
         data = {
             'id': str(grade.id),
             'name': grade.name,
+            'grade_code': grade.grade_code,
             'subjects': [{
                 'id': str(subject.id),
                 'name': subject.name,
                 'icon': subject.icon,
                 'colorcode': subject.colorcode,
+                'subject_code': subject.subject_code,
                 'proficiencies': [{
                     'id': str(proficiency.id),
                     'name': proficiency.name,
+                    'proficiency_code': proficiency.proficiency_code,
                     'lessons': [{
                         'id': str(lesson.id),
                         'lesson_code': lesson.lesson_code,
@@ -88,6 +92,7 @@ class SubjectDetailView(APIView):
             'proficiencies': [{
                 'id': str(proficiency.id),
                 'name': proficiency.name,
+                'proficiency_code': proficiency.proficiency_code,
                 'lessons': [{
                     'id': str(lesson.id),
                     'lesson_code': lesson.lesson_code,
@@ -108,6 +113,7 @@ class ProficiencyLessonsView(APIView):
         data = {
             'proficiency_id': str(proficiency.id),
             'proficiency_name': proficiency.name,
+            'proficiency_code': proficiency.proficiency_code,
             'lessons': [{
                 'id': str(lesson.id),
                 'lesson_code': lesson.lesson_code,
