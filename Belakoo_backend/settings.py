@@ -117,6 +117,7 @@ FIREBASE_ADMIN_CREDENTIALS_PATH = os.path.join(os.path.dirname(__file__), '..', 
 
 with open(FIREBASE_ADMIN_CREDENTIALS_PATH) as f:
     FIREBASE_ADMIN_CREDENTIALS = json.load(f)
+    print("Firebase Admin Credentials:", FIREBASE_ADMIN_CREDENTIALS)
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
