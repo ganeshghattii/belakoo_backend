@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
+import json
 
 load_dotenv()
 
@@ -111,7 +112,11 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
-# FIREBASE_ADMIN_CREDENTIALS = os.path.join(BASE_DIR, 'Belakoo_backend', 'firebase-admin-sdk.json')
+# Load Firebase Admin SDK credentials from the secret file in the root directory
+FIREBASE_ADMIN_CREDENTIALS_PATH = os.path.join(os.path.dirname(__file__), '..', 'firebase-admin-sdk.json')
+
+with open(FIREBASE_ADMIN_CREDENTIALS_PATH) as f:
+    FIREBASE_ADMIN_CREDENTIALS = json.load(f)
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

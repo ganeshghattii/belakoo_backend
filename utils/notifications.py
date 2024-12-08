@@ -11,10 +11,8 @@ def initialize_firebase():
         firebase_admin.get_app()
         print("Firebase already initialized")
     except ValueError:
-        # Load credentials from environment variable
-        cred_json = os.getenv('FIREBASE_ADMIN_CREDENTIALS_JSON')
-        cred_dict = json.loads(cred_json)
-        cred = credentials.Certificate(cred_dict)
+        # Use credentials from settings
+        cred = credentials.Certificate(settings.FIREBASE_ADMIN_CREDENTIALS)
         firebase_admin.initialize_app(cred)
         print("Firebase initialized")
 
