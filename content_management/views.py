@@ -11,6 +11,7 @@ import math
 import os
 import glob
 from utils.notifications import notify_admins_lesson_completed
+from django.utils import timezone
 
 class CampusListView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -158,9 +159,9 @@ class MarkLessonDoneView(APIView):
 
     def post(self, request, lesson_id):
         lesson = get_object_or_404(Lesson, id=lesson_id)
-        print(lesson)
         lesson.is_done = True
         lesson.completed_by = request.user
+        lesson.completed_at = timezone.now()
         lesson.save()
         
         # Send notification to admins

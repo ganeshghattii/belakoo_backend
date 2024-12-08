@@ -816,3 +816,64 @@ class UnverifiedCompletedLessonsView(APIView):
         } for lesson in unverified_lessons]
 
         return Response(data)
+    
+class AllLessonsView(APIView):
+    permission_classes = [IsAuthenticated, AdminPermission]
+
+    def get(self, request, campus_id=None):
+        # Start with all lessons
+        lessons = Lesson.objects.select_related(
+            'subject', 
+            'grade', 
+            'proficiency', 
+            'completed_by',
+            'grade__campus'
+        )
+
+        # Filter by campus if campus_id is provided
+        if campus_id:
+            lessons = lessons.filter(grade__campus_id=campus_id)
+
+        # Convert queryset to list of dictionaries
+        data = [{
+            'id': str(lesson.id),
+            'lesson_code': lesson.lesson_code,
+            'name': lesson.name,
+            'subject': {
+                'id': str(lesson.subject.id),
+                'name': lesson.subject.name,
+                'subject_code': lesson.subject.subject_code
+            },
+            'grade': {
+                'id': str(lesson.grade.id),
+                'name': lesson.grade.name,
+                'grade_code': lesson.grade.grade_code,
+                'campus': {
+                    'id': str(lesson.grade.campus.id),
+                    'name': lesson.grade.campus.name,
+                    'campus_code': lesson.grade.campus.campus_code
+                }
+            },
+            'proficiency': {
+                'id': str(lesson.proficiency.id),
+                'name': lesson.proficiency.name,
+                'proficiency_code': lesson.proficiency.proficiency_code
+            },
+            'is_done': lesson.is_done,
+            'verified': lesson.verified,
+            'completed_by': {
+                'id': str(lesson.completed_by.id),
+                'name': lesson.completed_by.name,
+                'email': lesson.completed_by.email
+            } if lesson.completed_by else None,
+            'objective': lesson.objective,
+            'duration': lesson.duration,
+            'specific_learning_outcome': lesson.specific_learning_outcome,
+            'behavioral_outcome': lesson.behavioral_outcome,
+            'materials_required': lesson.materials_required,
+            'created_at': lesson.created_at,
+            'completed_at': lesson.completed_at,
+            'last_update': lesson.last_update
+        } for lesson in lessons]
+
+        return Response(data)

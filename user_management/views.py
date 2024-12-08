@@ -63,9 +63,9 @@ class UpdatePushTokenView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        token = request.data.get('expo_push_token')
+        token = request.data.get('fcm_token')
         if not token:
-            return Response({'msg': 'expo_push_token is required'}, status=status.HTTP_400_BAD_REQUEST)
-        request.user.expo_push_token = token
+            return Response({'msg': 'fcm_token is required'}, status=status.HTTP_400_BAD_REQUEST)
+        request.user.fcm_token = token
         request.user.save()
         return Response({'msg': 'Push token updated successfully'})

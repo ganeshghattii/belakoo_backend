@@ -111,6 +111,8 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
+# FIREBASE_ADMIN_CREDENTIALS = os.path.join(BASE_DIR, 'Belakoo_backend', 'firebase-admin-sdk.json')
+
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 

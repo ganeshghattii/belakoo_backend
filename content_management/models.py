@@ -53,7 +53,7 @@ class Lesson(models.Model):
     lesson_code = models.CharField(max_length=100, unique=True)
     name = models.CharField(max_length=255)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='lessons')
-    grade = models.ForeignKey(Grade, on_delete=models.CASCADE, related_name='lessons') 
+    grade = models.ForeignKey(Grade, on_delete=models.CASCADE, related_name='lessons')
     proficiency = models.ForeignKey(Proficiency, on_delete=models.CASCADE, related_name='lessons')
     is_done = models.BooleanField(default=False)
     verified = models.BooleanField(default=False)
@@ -68,6 +68,8 @@ class Lesson(models.Model):
     apply = models.JSONField(null=True, blank=True)
     assess = models.JSONField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    last_update = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.lesson_code

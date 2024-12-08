@@ -1,43 +1,53 @@
-import requests
+import os
 import json
+import firebase_admin
+from firebase_admin import credentials, messaging
 from django.conf import settings
 from user_management.models import User
 
-def send_push_notification(expo_push_token, title, message, data=None):
-    url = "https://exp.host/--/api/v2/push/send"
-    headers = {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-    }
-    payload = {
-        "to": expo_push_token,
-        "sound": "default",
-        "title": title,
-        "body": message,
-        "data": data or {},
-    }
-    print("Sending payload:", json.dumps(payload))
+def initialize_firebase():
     try:
-        response = requests.post(url, headers=headers, data=json.dumps(payload))
-        print("Response status code:", response.status_code)
-        print("Response content:", response.content.decode())
-        if response.status_code == 200:
-            print(f"Notification sent successfully to {expo_push_token}")
-        else:
-            print(f"Failed to send notification: {response.status_code} - {response.content.decode()}")
+        # Check if already initialized
+        firebase_admin.get_app()
+        print("Firebase already initialized")
+    except ValueError:
+        # Load credentials from environment variable
+        cred_json = os.getenv('FIREBASE_ADMIN_CREDENTIALS_JSON')
+        cred_dict = json.loads(cred_json)
+        cred = credentials.Certificate(cred_dict)
+        firebase_admin.initialize_app(cred)
+        print("Firebase initialized")
+
+# Initialize Firebase when module loads
+initialize_firebase()
+
+def send_push_notification(fcm_token, title, message, data=None):
+    try:
+        message = messaging.Message(
+            notification=messaging.Notification(
+                title=title,
+                body=message,
+            ),
+            data=data or {},
+            token=fcm_token,
+        )
+        
+        response = messaging.send(message)
+        print(f"Successfully sent message: {response}")
+        return True
     except Exception as e:
         print(f"Error sending notification: {str(e)}")
+        return False
 
 def notify_admins_lesson_completed(lesson, completed_by):
-    # Get all admins with push tokens
     admins = User.objects.filter(
-        role='ADMIN',  # adjust based on your role field
-        expo_push_token__isnull=False
+        role='ADMIN',
+        fcm_token__isnull=False
     )
-    print(admins)
+    
     for admin in admins:
         send_push_notification(
-            expo_push_token=admin.expo_push_token,
+            fcm_token=admin.fcm_token,
             title="Lesson Completion Review Required",
             message=f"{completed_by.name} has completed lesson: {lesson.name}",
             data={

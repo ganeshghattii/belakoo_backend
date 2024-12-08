@@ -16,4 +16,6 @@ urlpatterns = [
     path('lesson/', views.LessonManagementView.as_view(), name='create-lesson'),
     path('lesson/<uuid:lesson_id>/', views.LessonManagementView.as_view(), name='update-delete-lesson'),
     path('unverified-completed-lessons/', views.UnverifiedCompletedLessonsView.as_view(), name='unverified-completed-lessons'),
+    path('lessons/', views.AllLessonsView.as_view(), name='all-lessons'),
+    path('lessons/campus/<uuid:campus_id>/', views.AllLessonsView.as_view(), name='campus-lessons'),
 ]
