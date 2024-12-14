@@ -12,3 +12,5 @@ openpyxl
 requests
 exponent_server_sdk
 firebase-admin
+gspread 
+oauth2client
