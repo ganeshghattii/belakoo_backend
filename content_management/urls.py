@@ -11,4 +11,5 @@ urlpatterns = [
     path('lessons/<uuid:lesson_id>/mark-done/', views.MarkLessonDoneView.as_view(), name='mark-lesson-done'),
     path('lessons/<uuid:lesson_id>/mark-not-done/', views.MarkLessonNotDoneView.as_view(), name='mark-lesson-not-done'),
     path('parse/', views.ParseCSVView.as_view(), name='test'),
+    path('sheets/', views.GetAllSheetsView.as_view(), name='get-all-sheets'),
 ]

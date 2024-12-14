@@ -12,6 +12,9 @@ import os
 import glob
 from utils.notifications import notify_admins_lesson_completed
 from django.utils import timezone
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import json
 
 class CampusListView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -178,6 +181,7 @@ class MarkLessonNotDoneView(APIView):
         lesson.save()
         return Response({'message': 'Lesson marked as not done'}, status=status.HTTP_200_OK)
 
+
 class ParseCSVView(APIView):
     def get(self, request):
         created_lessons = []
@@ -185,121 +189,222 @@ class ParseCSVView(APIView):
         error_details = []
 
         try:
-            import os
-            import glob
-            import pandas as pd
+            # Setup Google Sheets authentication
+            scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+            creds = ServiceAccountCredentials.from_json_keyfile_name(
+                'belakoo-fdc48-de4dfbe50d3e.json', 
+                scope
+            )
+            client = gspread.authorize(creds)
+
+            # Open the spreadsheet
+            sheet_url = 'https://docs.google.com/spreadsheets/d/1jUz-Q-zjXw9tnFhxiSGeueI0uUAlA6dazyougsKX7d4'
+            spreadsheet = client.open_by_url(sheet_url)
+
+            # Get all worksheets except 'Instr & Obj'
+            worksheets = [sheet for sheet in spreadsheet.worksheets() if sheet.title != 'Instr & Obj']
+            if not worksheets:
+                return Response({"error": "No valid worksheets found"}, status=status.HTTP_404_NOT_FOUND)
             
-            # Path to the content directory
-            content_dir = 'Belakoo_backend/content/'
-            # Get all CSV files in the directory
-            csv_files = glob.glob(os.path.join(content_dir, '*.csv'))
-
-            print("fetch campus")
+            print(f"Found {len(worksheets)} worksheets to process")
+            
+            # Get campus
             campus = Campus.objects.get(campus_code='c1')
+            print(f"Found campus: {campus.name}")
 
-            print(campus, "fetched")
-            for file_path in csv_files:
-                print(f"Processing file: {file_path}")
-                df = pd.read_csv(file_path)
-
-                # Function to find a keyword and its value
-                def find_keyword_value(keyword):
-                    for i, row in df.iterrows():
-                        if keyword in row.values:
-                            col_index = row.tolist().index(keyword)
-                            if col_index + 1 < len(row):
-                                return row[col_index + 1]
-                    return None
-
-                # List of keywords to search for
-                keywords = [
-                    'LESSON CODE', 'OBJECTIVE', 'Duration',
-                    'Specific Learning Outcome', 'Behavioural Outcome',
-                    'Materials Required', 'HOOK', 'ASSESS', 'INFORM', 'ENGAGE', 'TEACH', 'GUIDED PRACTICE', 'INDEPENDENT PRACTICE', 'SHARE', 'ASSESSMENT'
-                ]
-
-                # Extract values for each keyword
-                lesson_data = {}
-                for keyword in keywords:
-                    value = find_keyword_value(keyword)
-                    if value is not None:
-                        lesson_data[keyword] = value
-                    else:
-                        not_found_content.append(keyword)
-
-                # Parse the LESSON CODE
-                extracted_code = lesson_data.get('LESSON CODE', '').split('.')
-                if len(extracted_code) != 4:
-                    print(f"Invalid LESSON CODE format: {lesson_data.get('LESSON CODE')}")
-                    continue  # Skip this entry if the format is invalid
-
-                subject_code = extracted_code[0]  # First part is subject
-                grade_code = extracted_code[1]     # Second part is grade
-                lesson_number = extracted_code[2]  # Third part is lesson
-                proficiency_code = extracted_code[3]  # Fourth part is proficiency
-
-                # Get or create the Grade
-                grade, created = Grade.objects.get_or_create(
-                    grade_code=grade_code,
-                    campus=campus,  # Link grade to the specific campus
-                    defaults={'name': grade_code}
-                )
-                print(f"{'Created' if created else 'Found'} grade: {grade.name}")
-
-                # Get or create the Subject
-                subject_name = find_keyword_value('SUBJECT')  # Assuming 'SUBJECT' is a keyword in the CSV
-                subject, created = Subject.objects.get_or_create(
-                    subject_code=subject_code,
-                    grade=grade,  # Link subject to the specific grade
-                    defaults={'name': subject_name}
-                )
-                print(f"{'Created' if created else 'Found'} subject: {subject.name}")
-
-                # Create a new Proficiency for this specific Subject
-                proficiency, created = Proficiency.objects.get_or_create(
-                    proficiency_code=proficiency_code,
-                    subject=subject,  # Link proficiency to the specific subject
-                    defaults={'name': proficiency_code}
-                )
-                print(f"{'Created' if created else 'Found'} proficiency: {proficiency.name}")
-
-                # Create and save the Lesson object
+            # Process each worksheet
+            for worksheet in worksheets:
                 try:
-                    lesson = Lesson.objects.create(
-                        lesson_code=lesson_data['LESSON CODE'],
-                        name=f"Lesson {lesson_number}",
-                        subject=subject,
-                        grade=grade,  # Link lesson to the specific grade
-                        proficiency=proficiency,
-                        objective=lesson_data.get('OBJECTIVE', ''),
-                        duration=lesson_data.get('Duration', ''),
-                        specific_learning_outcome=lesson_data.get('Specific Learning Outcome', ''),
-                        behavioural_outcome=lesson_data.get('Behavioural Outcome', ''),
-                        materials_required=lesson_data.get('Materials Required', ''),
-                        activate={"HOOK": lesson_data.get('HOOK', '')},
-                        acquire={"INFORM": lesson_data.get('INFORM', ''), "ENGAGE": lesson_data.get('ENGAGE', ''), "TEACH": lesson_data.get('TEACH', '')},
-                        apply={"GUIDED PRACTICE": lesson_data.get('GUIDED PRACTICE', ''), "INDEPENDENT PRACTICE": lesson_data.get('INDEPENDENT PRACTICE', ''), "SHARE": lesson_data.get('SHARE', '')},
-                        assess={"ASSESSMENT": lesson_data.get('ASSESS', '')}
-                    )
-                    created_lessons.append(lesson.lesson_code)
-                    print(f"Lesson created: {lesson.name}")
-                except Exception as e:
-                    error_details.append({
-                        'lesson_code': lesson_data.get('LESSON CODE'),
-                        'error': str(e)
-                    })
-                    print(f"Error creating lesson: {str(e)}")
+                    print(f"\nProcessing worksheet: {worksheet.title}")
+                    
+                    # Convert to DataFrame
+                    data = worksheet.get_all_values()
+                    df = pd.DataFrame(data)
+                    print(f"Created DataFrame for {worksheet.title}")
 
-            # Prepare the response
+                    # Find LESSON CODE
+                    lesson_code = None
+                    for i, row in df.iterrows():
+                        if 'LESSON CODE' in row.values:
+                            col_index = row.tolist().index('LESSON CODE')
+                            if col_index + 1 < len(row):
+                                lesson_code = row[col_index + 1]
+                                print(f"Found LESSON CODE: {lesson_code}")
+                                break
+
+                    if not lesson_code:
+                        raise Exception("LESSON CODE not found")
+
+                    # Split lesson code
+                    code_parts = lesson_code.split('.')
+                    if len(code_parts) != 4:
+                        raise Exception("Invalid LESSON CODE format")
+
+                    subject_code, grade_code, lesson_number, proficiency_code = code_parts
+                    print(f"Parsed codes - Subject: {subject_code}, Grade: {grade_code}, Lesson: {lesson_number}, Proficiency: {proficiency_code}")
+
+                    # Helper functions
+                    def get_field_value(field_name):
+                        for i, row in df.iterrows():
+                            if field_name in row.values:
+                                col_index = row.tolist().index(field_name)
+                                if col_index + 1 < len(row):
+                                    return row[col_index + 1]
+                        return ''
+
+                    def get_structured_field_value(field_name):
+                        for i, row in df.iterrows():
+                            if field_name in row.values:
+                                col_index = row.tolist().index(field_name)
+                                if col_index + 1 < len(row):
+                                    return [{
+                                        "title": field_name,
+                                        "desc": row[col_index + 1]
+                                    }]
+                        return []
+
+                    def get_resources_value(field_name):
+                        for i, row in df.iterrows():
+                            if field_name in row.values:
+                                col_index = row.tolist().index(field_name)
+                                if col_index + 2 < len(row):
+                                    return row[col_index + 2]
+                        return ''
+
+                    # Process Grade
+                    grade = Grade.objects.filter(grade_code=grade_code, campus=campus).first()
+                    if not grade:
+                        grade = Grade.objects.create(
+                            grade_code=grade_code,
+                            campus=campus,
+                            name=grade_code
+                        )
+                        print(f"Created new grade: {grade.name}")
+                    else:
+                        print(f"Found existing grade: {grade.name}")
+
+                    # Process Subject
+                    subject = Subject.objects.filter(subject_code=subject_code, grade=grade).first()
+                    if not subject:
+                        subject = Subject.objects.create(
+                            subject_code=subject_code,
+                            grade=grade,
+                            name="Mathematics",
+                            icon='https://drive.google.com/file/d/1ALzD7lJHFbQfxzHQVGrX1qlbwE9_eLQx/view?usp=drive_link',
+                            colorcode='#000000'
+                        )
+                        print(f"Created new subject: {subject.name}")
+                    else:
+                        print(f"Found existing subject: {subject.name}")
+
+                    # Process Proficiency
+                    proficiency = Proficiency.objects.filter(proficiency_code=proficiency_code, subject=subject).first()
+                    if not proficiency:
+                        proficiency = Proficiency.objects.create(
+                            proficiency_code=proficiency_code,
+                            subject=subject,
+                            name=proficiency_code
+                        )
+                        print(f"Created new proficiency: {proficiency.name}")
+                    else:
+                        print(f"Found existing proficiency: {proficiency.name}")
+
+                    # Create structured JSON fields
+                    activate_data = []
+                    for field in ['HOOK','ASSESS','INFORM']:
+                        field_data = get_structured_field_value(field)
+                        if field_data:
+                            activate_data.extend(field_data)
+                    
+                    acquire_data = []
+                    for field in ['ENGAGE', 'TEACH']:
+                        field_data = get_structured_field_value(field)
+                        if field_data:
+                            acquire_data.extend(field_data)
+                    
+                    apply_data = []
+                    for field in ['GUIDED PRACTICE', 'INDEPENDENT PRACTICE']:
+                        field_data = get_structured_field_value(field)
+                        if field_data:
+                            apply_data.extend(field_data)
+                    
+                    assess_data = []
+                    for field in ['ASSESSMENT', 'SHARE']:
+                        field_data = get_structured_field_value(field)
+                        if field_data:
+                            assess_data.extend(field_data)
+
+                    # Create Lesson
+                    try:
+                        lesson = Lesson.objects.create(
+                            lesson_code=lesson_code,
+                            name=f"Lesson {lesson_number}",
+                            subject=subject,
+                            grade=grade,
+                            proficiency=proficiency,
+                            objective=get_field_value('OBJECTIVE'),
+                            duration=get_field_value('Duration'),
+                            specific_learning_outcome=get_field_value('Specific Learning Outcome '),
+                            behavioral_outcome=get_field_value('Behavioural Outcome'),
+                            materials_required=get_field_value('Materials Required'),
+                            activate=json.dumps(activate_data),
+                            acquire=json.dumps(acquire_data),
+                            apply=json.dumps(apply_data),
+                            assess=json.dumps(assess_data),
+                            resources=get_resources_value('RESOURCES')
+                        )
+                        print(f"Created lesson: {lesson.name} with structured JSON fields")
+                        created_lessons.append({'sheet': worksheet.title, 'lesson_code': lesson.lesson_code})
+
+                    except Exception as e:
+                        error_details.append({
+                            'sheet': worksheet.title,
+                            'lesson_code': lesson_code,
+                            'error': str(e)
+                        })
+                        print(f"Error creating lesson: {str(e)}")
+                        continue
+
+                except Exception as worksheet_error:
+                    error_details.append({
+                        'sheet': worksheet.title,
+                        'error': str(worksheet_error)
+                    })
+                    print(f"Error processing worksheet {worksheet.title}: {str(worksheet_error)}")
+                    continue
+
             response_data = {
-                "message": "Lessons processed successfully",
+                "message": "All sheets processed",
+                "total_sheets": len(worksheets),
                 "created_lessons": created_lessons,
                 "not_found_content": not_found_content,
                 "error_details": error_details
             }
-
             return Response(response_data, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            print(f"An error occurred: {str(e)}")
-            return Response({"error": str(e)}, status=500)
+            print(f"Error: {str(e)}")
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class GetAllSheetsView(APIView):
+    def get(self, request):
+        # Define the scope
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+
+        # Load the credentials from the JSON file
+        creds = ServiceAccountCredentials.from_json_keyfile_name('Belakoo_backend/belakoo-fdc48-de4dfbe50d3e.json', scope)
+        client = gspread.authorize(creds)
+
+        # Open the Google Sheet by URL
+        sheet_url = 'https://docs.google.com/spreadsheets/d/1jUz-Q-zjXw9tnFhxiSGeueI0uUAlA6dazyougsKX7d4'
+        spreadsheet = client.open_by_url(sheet_url)
+
+        # Get all sheet names
+        sheet_names = [sheet.title for sheet in spreadsheet.worksheets()]
+
+        # Print all sheet names
+        print("Sheets present in the Google Sheet:")
+        for name in sheet_names:
+            print(name)
+
+        return Response({"sheets": sheet_names}, status=status.HTTP_200_OK)

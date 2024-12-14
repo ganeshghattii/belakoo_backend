@@ -27,7 +27,7 @@ class Grade(models.Model):
 
 class Subject(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    subject_code = models.CharField(max_length=10, unique=True)
+    subject_code = models.CharField(max_length=10)
     name = models.CharField(max_length=255)
     icon = models.URLField()
     grade = models.ForeignKey(Grade, on_delete=models.CASCADE, related_name='subjects')
@@ -63,6 +63,7 @@ class Lesson(models.Model):
     specific_learning_outcome = models.TextField(null=True, blank=True)
     behavioral_outcome = models.TextField(null=True, blank=True)
     materials_required = models.TextField(null=True, blank=True)
+    resources=models.TextField(null=True, blank=True)
     activate = models.JSONField(null=True, blank=True)
     acquire = models.JSONField(null=True, blank=True)
     apply = models.JSONField(null=True, blank=True)
