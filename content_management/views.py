@@ -148,6 +148,7 @@ class LessonDetailView(APIView):
             'specific_learning_outcome': lesson.specific_learning_outcome,
             'behavioral_outcome': lesson.behavioral_outcome,
             'materials_required': lesson.materials_required,
+            'resources': lesson.resources,
             'verified': lesson.verified,
             'activate': lesson.activate,
             'acquire': lesson.acquire,

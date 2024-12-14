@@ -686,6 +686,9 @@ class LessonManagementView(APIView):
                 
             if 'materials_required' in request.data:
                 lesson.materials_required = request.data['materials_required']
+
+            if 'resources' in request.data:
+                lesson.resources = request.data['resources']
                 
             # Handle verified status (admin only)
             if 'verified' in request.data:
@@ -748,6 +751,7 @@ class LessonManagementView(APIView):
                     'specific_learning_outcome': lesson.specific_learning_outcome,
                     'behavioral_outcome': lesson.behavioral_outcome,
                     'materials_required': lesson.materials_required,
+                    'resources': lesson.resources,
                     'is_done': lesson.is_done,
                     'verified': lesson.verified,
                     'activate': lesson.activate,
