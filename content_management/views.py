@@ -199,7 +199,7 @@ class ParseCSVView(APIView):
             client = gspread.authorize(creds)
 
             # Open the spreadsheet
-            sheet_url = 'https://docs.google.com/spreadsheets/d/1jUz-Q-zjXw9tnFhxiSGeueI0uUAlA6dazyougsKX7d4'
+            sheet_url = 'https://docs.google.com/spreadsheets/d/170EoYkNXOAAVIIqccV3eo_GF2XSxojBEbaj0EAEsQWw'
             spreadsheet = client.open_by_url(sheet_url)
 
             # Get all worksheets except 'Instr & Obj'
@@ -223,15 +223,8 @@ class ParseCSVView(APIView):
                     df = pd.DataFrame(data)
                     print(f"Created DataFrame for {worksheet.title}")
 
-                    # Find LESSON CODE
-                    lesson_code = None
-                    for i, row in df.iterrows():
-                        if 'LESSON CODE' in row.values:
-                            col_index = row.tolist().index('LESSON CODE')
-                            if col_index + 1 < len(row):
-                                lesson_code = row[col_index + 1]
-                                print(f"Found LESSON CODE: {lesson_code}")
-                                break
+                    lesson_code = worksheet.title
+                    print(f"Using lesson_code from filename: {lesson_code}")
 
                     if not lesson_code:
                         raise Exception("LESSON CODE not found")
@@ -290,9 +283,9 @@ class ParseCSVView(APIView):
                         subject = Subject.objects.create(
                             subject_code=subject_code,
                             grade=grade,
-                            name="Mathematics",
-                            icon='https://drive.google.com/file/d/1ALzD7lJHFbQfxzHQVGrX1qlbwE9_eLQx/view?usp=drive_link',
-                            colorcode='#000000'
+                            name="Reading",
+                            icon='https://drive.google.com/file/d/10mff_DuW-tjzuI10ijNTavIsFYAr0zCv/view?usp=drive_link',
+                            colorcode='#FFFF00'
                         )
                         print(f"Created new subject: {subject.name}")
                     else:
