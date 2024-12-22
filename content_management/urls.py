@@ -12,4 +12,6 @@ urlpatterns = [
     path('lessons/<uuid:lesson_id>/mark-not-done/', views.MarkLessonNotDoneView.as_view(), name='mark-lesson-not-done'),
     path('parse/', views.ParseCSVView.as_view(), name='test'),
     path('sheets/', views.GetAllSheetsView.as_view(), name='get-all-sheets'),
+    path('sheets/parse/', views.ParseCSVView.as_view(), name='parse-csv'),
+    path('delete-li-content/', views.DeleteLIContentView.as_view(), name='delete-li-content'),
 ]

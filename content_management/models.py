@@ -59,7 +59,7 @@ class Lesson(models.Model):
     verified = models.BooleanField(default=False)
     completed_by = models.ForeignKey('user_management.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='completed_lessons')
     objective = models.TextField(null=True, blank=True)
-    duration = models.CharField(max_length=50, null=True, blank=True)
+    duration = models.CharField(max_length=250, null=True, blank=True)
     specific_learning_outcome = models.TextField(null=True, blank=True)
     behavioral_outcome = models.TextField(null=True, blank=True)
     materials_required = models.TextField(null=True, blank=True)
